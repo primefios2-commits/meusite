@@ -1,0 +1,577 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Prime Fios - Portal Têxtil & Orçamentos</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#1e3a8a', // Azul escuro corporativo
+                        secondary: '#0284c7', // Azul de destaque
+                        accent: '#f59e0b', // Laranja para alertas
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        .page-section { transition: opacity 0.2s ease-in-out; }
+    </style>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+</head>
+<body class="bg-gray-50 text-gray-800 min-h-screen flex flex-col">
+
+    <header class="bg-white shadow-md sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between">
+            <div class="flex items-center space-x-3 cursor-pointer" onclick="switchPage('home')">
+                <div class="bg-primary text-white p-2.5 rounded-xl shadow-lg">
+                    <i class="fa-solid fa-scissors text-xl"></i>
+                </div>
+                <div>
+                    <span class="text-xl font-extrabold text-primary tracking-tight">PRIME FIOS</span>
+                    <span class="block text-xs text-gray-400 font-medium tracking-widest uppercase">Industrial Têxtil</span>
+                </div>
+            </div>
+
+            <nav class="hidden md:flex items-center space-x-8 font-semibold text-gray-600">
+                <button onclick="switchPage('home')" id="nav-home" class="hover:text-primary transition-colors text-primary border-b-2 border-primary pb-1">Quem Somos</button>
+                <button onclick="switchPage('orcamento')" id="nav-orcamento" class="hover:text-primary transition-colors pb-1">Pré-Orçamento</button>
+                <button onclick="switchPage('contato')" id="nav-contato" class="hover:text-primary transition-colors pb-1">Contato</button>
+            </nav>
+
+            <div class="flex items-center space-x-4">
+                <button onclick="switchPage('admin')" id="nav-admin" class="bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-xl text-sm font-bold transition-all flex items-center space-x-2">
+                    <i class="fa-solid fa-lock text-xs"></i>
+                    <span>Painel Admin</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <main class="flex-grow max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-10">
+
+        <section id="page-home" class="page-section space-y-12">
+            <div class="text-center max-w-3xl mx-auto space-y-4">
+                <h1 class="text-4xl font-black text-primary md:text-5xl leading-tight">Excelência em Fornecimento e Industrialização Têxtil</h1>
+                <p class="text-gray-600 text-lg">A Prime Fios une tecnologia de ponta, matérias-primas rigorosamente selecionadas e engenharia de precisão para entregar as melhores malhas e fios do mercado nacional.</p>
+            </div>
+            
+            <div class="grid md:grid-cols-3 gap-8 pt-6">
+                <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 space-y-3">
+                    <div class="text-secondary text-3xl"><i class="fa-solid fa-layer-group"></i></div>
+                    <h3 class="text-xl font-bold text-gray-900">Capacidade de Production</h3>
+                    <p class="text-gray-600 text-sm">Estrutura industrial dimensionada para atender grandes volumes em tecelagem e acabamentos têxteis com prazos otimizados.</p>
+                </div>
+                <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 space-y-3">
+                    <div class="text-secondary text-3xl"><i class="fa-solid fa-droplet"></i></div>
+                    <h3 class="text-xl font-bold text-gray-900">Tinturaria de Alta Performance</h3>
+                    <p class="text-gray-600 text-sm">Fidelidade absoluta de cores com laboratórios automatizados e insumos com certificações de sustentabilidade.</p>
+                </div>
+                <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 space-y-3">
+                    <div class="text-secondary text-3xl"><i class="fa-solid fa-shield-halved"></i></div>
+                    <h3 class="text-xl font-bold text-gray-900">Garantia e Rastreabilidade</h3>
+                    <p class="text-gray-600 text-sm">Monitoramento laboratorial desde a entrada do fio cru até a expedição final do rolo de malha acabado.</p>
+                </div>
+            </div>
+        </section>
+
+        <section id="page-orcamento" class="page-section hidden grid lg:grid-cols-3 gap-8">
+            <div class="lg:col-span-2 bg-white p-8 rounded-3xl shadow-sm border border-gray-100 space-y-6">
+                <div>
+                    <h2 class="text-2xl font-black text-primary">Simulador de Orçamento Têxtil</h2>
+                    <p class="text-gray-500 text-sm">Configure o seu lote de malha para obter projeções comerciais automáticas.</p>
+                </div>
+
+                <div class="grid md:grid-cols-2 gap-6">
+                    <div class="space-y-2">
+                        <label class="block text-sm font-bold text-gray-700">1. Selecione o Produto / Artigo</label>
+                        <select id="produto" onchange="executarCalculoOrcamento()" class="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 focus:ring-2 focus:ring-primary focus:bg-white outline-none font-medium transition-all">
+                            </select>
+                    </div>
+
+                    <div class="space-y-2">
+                        <label class="block text-sm font-bold text-gray-700">2. Escolha a Variante de Cor</label>
+                        <select id="cor" onchange="executarCalculoOrcamento()" class="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 focus:ring-2 focus:ring-primary focus:bg-white outline-none font-medium transition-all">
+                            </select>
+                    </div>
+                </div>
+
+                <div class="space-y-2">
+                    <label class="block text-sm font-bold text-gray-700">3. Volume do Pedido</label>
+                    <select id="quantidade" onchange="executarCalculoOrcamento()" class="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 focus:ring-2 focus:ring-primary focus:bg-white outline-none font-bold text-lg transition-all">
+                        <option value="300">300 KG</option>
+                        <option value="500">500 KG</option>
+                        <option value="1000" selected>1.000 KG</option>
+                        <option value="2000">2.000 KG</option>
+                        <option value="5000">5.000 KG</option>
+                        <option value="10000">10.000 KG</option>
+                    </select>
+                    <p class="text-xs text-amber-800 font-semibold bg-amber-50 p-3 rounded-xl border border-amber-200 mt-2 flex items-center space-x-2">
+                        <i class="fa-solid fa-circle-info text-amber-500 text-sm"></i>
+                        <span>Atenção: Este peso representa apenas a única cor escolhida.</span>
+                    </p>
+                </div>
+            </div>
+
+            <div class="bg-primary text-white p-8 rounded-3xl shadow-xl flex flex-col justify-between space-y-8">
+                <div class="space-y-6">
+                    <h3 class="text-xl font-extrabold tracking-tight border-b border-blue-900 pb-3">Resumo da Projeção Financeira</h3>
+                    
+                    <div>
+                        <span class="text-xs text-blue-200 block uppercase font-bold tracking-widest">Valor do Quilo (Kg) Acabado</span>
+                        <div id="res-preco-kg" class="text-3xl font-black text-white">R$ 0,00</div>
+                    </div>
+
+                    <div class="border-t border-blue-900 pt-4">
+                        <span class="text-xs text-blue-200 block uppercase font-bold tracking-widest">Valor Bruto do Lote</span>
+                        <div id="res-valor-total" class="text-4xl font-black text-amber-400 tracking-tight">R$ 0,00</div>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-4 border-t border-blue-900 pt-4">
+                        <div>
+                            <span class="text-xs text-blue-200 block font-bold uppercase tracking-wide">Sinal (Custo do Fio)</span>
+                            <div id="res-sinal" class="text-lg font-bold text-yellow-300">R$ 0,00</div>
+                        </div>
+                        <div>
+                            <span class="text-xs text-blue-200 block font-bold uppercase tracking-wide">Liquidação (Entrega)</span>
+                            <div id="res-entrega" class="text-lg font-bold text-green-400">R$ 0,00</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="space-y-3 pt-4">
+                    <button onclick="enviarOrcamento('whatsapp')" class="w-full bg-emerald-500 hover:bg-emerald-600 text-white font-bold py-3.5 px-4 rounded-xl shadow-lg flex items-center justify-center space-x-2 transition-all">
+                        <i class="fa-brands fa-whatsapp text-lg"></i>
+                        <span>Formalizar por WhatsApp</span>
+                    </button>
+                    <button onclick="enviarOrcamento('email')" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3.5 px-4 rounded-xl shadow-lg flex items-center justify-center space-x-2 transition-all border border-blue-500">
+                        <i class="fa-solid fa-envelope text-lg"></i>
+                        <span>Formalizar por E-mail</span>
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <section id="page-contato" class="page-section hidden max-w-4xl mx-auto bg-white p-8 rounded-3xl shadow-sm border border-gray-100">
+            <div class="text-center max-w-xl mx-auto space-y-3 mb-10">
+                <h2 class="text-3xl font-black text-primary">Canais de Atendimento Oficial</h2>
+                <p class="text-gray-500">Entre em contato direto com o nosso departamento comercial corporativo.</p>
+            </div>
+
+            <div class="grid md:grid-cols-2 gap-8">
+                <div class="space-y-6">
+                    <div class="flex items-start space-x-4">
+                        <div class="bg-blue-50 text-primary p-3.5 rounded-xl"><i class="fa-solid fa-phone text-lg"></i></div>
+                        <div>
+                            <h4 class="font-bold text-gray-900">Telefones de Contato</h4>
+                            <p id="contato-txt-whats" class="text-gray-600 text-sm font-semibold mt-1">Carregando...</p>
+                        </div>
+                    </div>
+                    <div class="flex items-start space-x-4">
+                        <div class="bg-blue-50 text-primary p-3.5 rounded-xl"><i class="fa-solid fa-envelope text-lg"></i></div>
+                        <div>
+                            <h4 class="font-bold text-gray-900">E-mail Corporativo</h4>
+                            <p id="contato-txt-email" class="text-gray-600 text-sm font-semibold mt-1">Carregando...</p>
+                        </div>
+                    </div>
+                    <div class="flex items-start space-x-4">
+                        <div class="bg-blue-50 text-primary p-3.5 rounded-xl"><i class="fa-solid fa-location-dot text-lg"></i></div>
+                        <div>
+                            <h4 class="font-bold text-gray-900">Parque Industrial</h4>
+                            <p class="text-gray-600 text-sm mt-1">Distrito Industrial - Polo Têxtil, Santa Catarina</p>
+                        </div>
+                    </div>
+                </div>
+
+                <form onsubmit="event.preventDefault(); alert('Mensagem enviada com sucesso!');" class="space-y-4">
+                    <input type="text" placeholder="Seu Nome Completo" required class="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-primary focus:bg-white transition-all">
+                    <input type="email" placeholder="Seu E-mail Corporativo" required class="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-primary focus:bg-white transition-all">
+                    <textarea placeholder="Como podemos ajudar no seu projeto?" rows="3" required class="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-primary focus:bg-white transition-all"></textarea>
+                    <button class="w-full bg-primary hover:bg-blue-900 text-white font-bold py-3 px-4 rounded-xl transition-all shadow-md">Enviar Mensagem</button>
+                </form>
+            </div>
+        </section>
+
+        <section id="page-admin" class="page-section hidden space-y-10">
+            <div class="flex flex-col md:flex-row md:items-center justify-between border-b border-gray-200 pb-4 gap-4">
+                <div>
+                    <h2 class="text-2xl font-black text-gray-900">Painel de Configuração Têxtil</h2>
+                    <p class="text-gray-500 text-sm">Controle de tabelas de custos de insumos e dados de leads.</p>
+                </div>
+                <div class="flex space-x-2">
+                    <button onclick="restaurarDadosOriginais()" class="bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-xl text-xs font-bold transition-all">Restaurar Padrão</button>
+                </div>
+            </div>
+
+            <div class="grid lg:grid-cols-3 gap-8">
+                <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 space-y-4 h-fit">
+                    <h3 class="text-md font-bold text-gray-900 border-b border-gray-100 pb-2 flex items-center space-x-2">
+                        <i class="fa-solid fa-address-book text-primary"></i>
+                        <span>Destinatários de Leads</span>
+                    </h3>
+                    <div class="space-y-3">
+                        <div>
+                            <label class="block text-xs font-bold text-gray-500 uppercase">WhatsApp (Apenas Números)</label>
+                            <input type="text" id="adm-whats" onchange="salvarDadosAtendimento()" class="w-full bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-sm font-bold mt-1">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-gray-500 uppercase">E-mail de Vendas</label>
+                            <input type="email" id="adm-email" onchange="salvarDadosAtendimento()" class="w-full bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-sm font-bold mt-1">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="lg:col-span-2 space-y-8">
+                    <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 space-y-4">
+                        <div class="flex justify-between items-center">
+                            <h3 class="text-md font-bold text-gray-900 flex items-center space-x-2">
+                                <i class="fa-solid fa-scroll text-primary"></i>
+                                <span>Tabela de Produtos & Custos</span>
+                            </h3>
+                            <button onclick="abrirModalProduto()" class="bg-primary text-white text-xs font-bold px-3 py-1.5 rounded-lg hover:bg-blue-950 transition-all">+ Novo Artigo</button>
+                        </div>
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left text-xs border-collapse">
+                                <thead>
+                                    <tr class="bg-gray-50 text-gray-500 uppercase font-bold border-b border-gray-100">
+                                        <th class="p-3">Artigo/Descrição</th>
+                                        <th class="p-3">Fio (R$)</th>
+                                        <th class="p-3">Tecel. (R$)</th>
+                                        <th class="p-3">Frete (R$)</th>
+                                        <th class="p-3">Lucro (R$)</th>
+                                        <th class="p-3 text-center">Ações</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="adm-lista-produtos">
+                                    </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 space-y-4">
+                        <div class="flex justify-between items-center">
+                            <h3 class="text-md font-bold text-gray-900 flex items-center space-x-2">
+                                <i class="fa-solid fa-palette text-primary"></i>
+                                <span>Tabela de Acabamentos de Cores</span>
+                            </h3>
+                            <button onclick="abrirModalCor()" class="bg-primary text-white text-xs font-bold px-3 py-1.5 rounded-lg hover:bg-blue-950 transition-all">+ Nova Cor</button>
+                        </div>
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left text-xs border-collapse">
+                                <thead>
+                                    <tr class="bg-gray-50 text-gray-500 uppercase font-bold border-b border-gray-100">
+                                        <th class="p-3">Tonalidade/Acabamento</th>
+                                        <th class="p-3">Tinturaria (R$)</th>
+                                        <th class="p-3 text-center">Ações</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="adm-lista-cores">
+                                    </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer class="bg-gray-900 text-gray-400 py-8 border-t border-gray-800 text-xs mt-auto">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col md:flex-row items-center justify-between gap-4">
+            <div class="flex items-center space-x-2 text-white font-bold">
+                <i class="fa-solid fa-scissors"></i>
+                <span>PRIME FIOS INDUSTRIAL</span>
+            </div>
+            <div>&copy; 2026 Prime Fios. Todos os direitos reservados. Engenharia Têxtil Integrada.</div>
+        </div>
+    </footer>
+
+    <script>
+        const firebaseConfig = {
+          apiKey: "AIzaSyC77VdzqV7ej9stsdLWZnn0ssfpVLLLpCY",
+          authDomain: "prime-fios.firebaseapp.com",
+          databaseURL: "https://prime-fios-default-rtdb.firebaseio.com",
+          projectId: "prime-fios",
+          storageBucket: "prime-fios.firebasestorage.app",
+          messagingSenderId: "253459161111",
+          appId: "1:253459161111:web:695b252485d29d285afc52",
+          measurementId: "G-GMX6HZE35D"
+        };
+
+        // Inicializa o Firebase
+        firebase.initializeApp(firebaseConfig);
+        const database = firebase.database();
+
+        // BANCO DE DADOS LOCAL (Valores padrão de fábrica caso a nuvem esteja vazia)
+        let dbProdutos = [
+            { id: 'p1', nome: 'Malha 24 OE', fio: 17.00, tecelagem: 1.70, frete: 0.50, lucro: 1.00 },
+            { id: 'p2', nome: 'Malha Fio 26', fio: 19.50, tecelagem: 1.80, frete: 0.50, lucro: 1.20 },
+            { id: 'p3', nome: 'Moletom Premium', fio: 22.00, tecelagem: 2.50, frete: 0.60, lucro: 1.50 }
+        ];
+
+        let dbCores = [
+            { id: 'c1', nome: 'Branco', tinturaria: 4.20 },
+            { id: 'c2', nome: 'Preto', tinturaria: 5.50 },
+            { id: 'c3', nome: 'Cores Especiais / Escuras', tinturaria: 6.80 }
+        ];
+
+        let dbContatos = {
+            whatsapp: '47999999999',
+            email: 'comercial@primefios.com.br'
+        };
+
+        // ========================================================================
+        //  CONEXÃO E SINCRONIZAÇÃO EM TEMPO REAL COM O FIREBASE REALTIME DATABASE
+        // ========================================================================
+        database.ref('dadosPrimeFios').on('value', (snapshot) => {
+            const dadosNuvem = snapshot.val();
+            
+            if (dadosNuvem) {
+                if (dadosNuvem.produtos) dbProdutos = dadosNuvem.produtos;
+                if (dadosNuvem.cores) dbCores = dadosNuvem.cores;
+                if (dadosNuvem.contatos) dbContatos = dadosNuvem.contatos;
+                
+                renderizarOpcoesFormulario();
+                renderizarPainelAdmin();
+                executarCalculoOrcamento();
+                atualizarTextosContatoPublicos();
+            } else {
+                salvarDadosNuvem();
+            }
+        });
+
+        // FUNÇÃO PARA SALVAR OS DADOS NA NUVEM
+        function salvarDadosNuvem() {
+            database.ref('dadosPrimeFios').set({
+                produtos: dbProdutos,
+                cores: dbCores,
+                contatos: dbContatos
+            }).then(() => {
+                console.log("Dados sincronizados no Firebase.");
+            }).catch((error) => {
+                console.error("Erro ao salvar no Firebase:", error);
+                alert("❌ Erro ao salvar os dados na nuvem.");
+            });
+        }
+
+        // NAVEGAÇÃO ENTRE PÁGINAS (SPA) - CORRIGIDA
+        function switchPage(targetId) {
+            if (targetId === 'admin') {
+                const senhaDefinida = "Mortadela123";
+                const senhaDigitada = prompt("Digite a senha de administrador para acessar as configurações:");
+                
+                if (senhaDigitada !== senhaDefinida) {
+                    alert("❌ Senha incorreta! Acesso negado.");
+                    return;
+                }
+            }
+
+            document.querySelectorAll('.page-section').forEach(sec => sec.classList.add('hidden'));
+            
+            const targetSection = document.getElementById(`page-${targetId}`);
+            if (targetSection) {
+                targetSection.classList.remove('hidden');
+            }
+
+            ['home', 'orcamento', 'contato', 'admin'].forEach(link => {
+                const btn = document.getElementById(`nav-${link}`);
+                if (btn) {
+                    if (link === targetId) {
+                        if (link === 'admin') {
+                            btn.className = "bg-primary text-white px-4 py-2 rounded-xl text-sm font-bold transition-all flex items-center space-x-2 shadow-md";
+                        } else {
+                            btn.className = "hover:text-primary transition-colors text-primary border-b-2 border-primary pb-1";
+                        }
+                    } else {
+                        if (link === 'admin') {
+                            btn.className = "bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-xl text-sm font-bold transition-all flex items-center space-x-2";
+                        } else {
+                            btn.className = "hover:text-primary transition-colors pb-1";
+                        }
+                    }
+                }
+            });
+            
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        // CONVERSOR FINANCEIRO
+        function formatarBRL(valor) {
+            return valor.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+        }
+function executarCalculoOrcamento() {
+            const selectProduto = document.getElementById('produto');
+            const selectCor = document.getElementById('cor');
+            const selectQuantidade = document.getElementById('quantidade');
+
+            if (!selectProduto || !selectCor || !selectQuantidade) return;
+            if (!selectProduto.value || !selectCor.value || !selectQuantidade.value) return;
+
+            const quantity = parseFloat(selectQuantidade.value);
+            if (isNaN(quantity) || quantity <= 0) return;
+
+            const prod = dbProdutos.find(p => p.id === selectProduto.value);
+            const color = dbCores.find(c => c.id === selectCor.value);
+
+            if (!prod || !color) return;
+
+            const fio = parseFloat(prod.fio) || 0;
+            const tecelagem = parseFloat(prod.tecelagem) || 0;
+            const frete = parseFloat(prod.frete) || 0;
+            const lucro = parseFloat(prod.lucro) || 0;
+            const tinturaria = parseFloat(color.tinturaria) || 0;
+
+            const precoKg = fio + tecelagem + tinturaria + frete + lucro;
+            const valorTotal = precoKg * quantity;
+            const sinal = fio * quantity;
+            const entrega = valorTotal - sinal;
+
+            document.getElementById('res-preco-kg').textContent = formatarBRL(precoKg);
+            document.getElementById('res-valor-total').textContent = formatarBRL(valorTotal);
+            document.getElementById('res-sinal').textContent = formatarBRL(sinal);
+            document.getElementById('res-entrega').textContent = formatarBRL(entrega);
+        }
+
+        // DISPARADORES DE MENSAGENS COM LEADS
+        function enviarOrcamento(canal) {
+            const selectProd = document.getElementById('produto');
+            const selectCor = document.getElementById('cor');
+            
+            const nomeProd = selectProd.options[selectProd.selectedIndex].text;
+            const nomeCor = selectCor.options[selectCor.selectedIndex].text;
+            const qtd = document.getElementById('quantidade').value;
+
+            const precoKg = document.getElementById('res-preco-kg').innerText;
+            const total = document.getElementById('res-valor-total').innerText;
+            const sinal = document.getElementById('res-sinal').innerText;
+            const entrega = document.getElementById('res-entrega').innerText;
+
+            const mensagem = `Olá Prime Fios, gostaria de formalizar uma solicitação de pré-orçamento:\n\n` +
+                             `*Especificações do Lote:*\n` +
+                             `• Produto: ${nomeProd}\n` +
+                             `• Volume Solicitado: ${qtd} kg\n` +
+                             `• Tonalidade: ${nomeCor}\n` +
+                             `• Preço de Malha por Kg: ${precoKg}\n\n` +
+                             `*Estrutura Financeira Estimada:*\n` +
+                             `• Valor Bruto Total: ${total}\n` +
+                             `• Entrada/Sinal (Fio): ${sinal}\n` +
+                             `• Liquidação (Entrega do Lote): ${entrega}\n\n` +
+                             `_Prazo estimado sujeito à engenharia de produção (25 a 45 dias). Quebra industrial regulamentar de 6% a 8%._`;
+
+            if (canal === 'whatsapp') {
+                if (!dbContatos.whatsapp) {
+                    alert('Erro: Destinatário do WhatsApp não configurado no Painel Admin.');
+                    switchPage('admin');
+                    return;
+                }
+                window.open(`https://api.whatsapp.com/send?phone=${dbContatos.whatsapp.replace(/\D/g, '')}&text=${encodeURIComponent(mensagem)}`, '_blank');
+            } else if (canal === 'email') {
+                if (!dbContatos.email) {
+                    alert('Erro: Destinatário de E-mail não configurado no Painel Admin.');
+                    switchPage('admin');
+                    return;
+                }
+                window.open(`mailto:${dbContatos.email}?subject=Solicitação de Orçamento Têxtil - Prime Fios&body=${encodeURIComponent(mensagem)}`, '_blank');
+            }
+        }
+
+        function renderizarOpcoesFormulario() {
+            const selectProd = document.getElementById('produto');
+            const selectCor = document.getElementById('cor');
+
+            if(selectProd && selectCor) {
+                selectProd.innerHTML = dbProdutos.map(p => `<option value="${p.id}">${p.nome}</option>`).join('');
+                selectCor.innerHTML = dbCores.map(c => `<option value="${c.id}">${c.nome}</option>`).join('');
+            }
+        }
+
+        function renderizarPainelAdmin() {
+            const fieldWhats = document.getElementById('adm-whats');
+            const fieldEmail = document.getElementById('adm-email');
+            
+            if(fieldWhats) fieldWhats.value = dbContatos.whatsapp;
+            if(fieldEmail) fieldEmail.value = dbContatos.email;
+
+            const listaProdutos = document.getElementById('adm-lista-produtos');
+            if (listaProdutos) {
+                listaProdutos.innerHTML = dbProdutos.map(p => `
+                    <tr class="border-b border-gray-100 hover:bg-gray-50 font-medium">
+                        <td class="p-3 font-bold text-gray-900">${p.nome}</td>
+                        <td class="p-3">${formatarBRL(p.fio)}</td>
+                        <td class="p-3">${formatarBRL(p.tecelagem)}</td>
+                        <td class="p-3">${formatarBRL(p.frete)}</td>
+                        <td class="p-3">${formatarBRL(p.lucro)}</td>
+                        <td class="p-3 text-center">
+                            <button onclick="removerItem('produto', '${p.id}')" class="text-red-500 hover:text-red-700 px-2 py-1"><i class="fa-solid fa-trash-can"></i></button>
+                        </td>
+                    </tr>
+                `).join('');
+            }
+
+            const listaCores = document.getElementById('adm-lista-cores');
+            if (listaCores) {
+                listaCores.innerHTML = dbCores.map(c => `
+                    <tr class="border-b border-gray-100 hover:bg-gray-50 font-medium">
+                        <td class="p-3 font-bold text-gray-900">${c.nome}</td>
+                        <td class="p-3">${formatarBRL(c.tinturaria)}</td>
+                        <td class="p-3 text-center">
+                            <button onclick="removerItem('cor', '${c.id}')" class="text-red-500 hover:text-red-700 px-2 py-1"><i class="fa-solid fa-trash-can"></i></button>
+                        </td>
+                    </tr>
+                `).join('');
+            }
+        }
+
+        function salvarDadosAtendimento() {
+            dbContatos.whatsapp = document.getElementById('adm-whats').value;
+            dbContatos.email = document.getElementById('adm-email').value;
+            salvarDadosNuvem();
+            atualizarTextosContatoPublicos();
+        }
+
+        function atualizarTextosContatoPublicos() {
+            const txtWhats = document.getElementById('contato-txt-whats');
+            const txtEmail = document.getElementById('contato-txt-email');
+            if(txtWhats) txtWhats.innerText = dbContatos.whatsapp || 'Não configurado';
+            if(txtEmail) txtEmail.innerText = dbContatos.email || 'Não configurado';
+        }
+
+        function removerItem(tipo, id) {
+            if (!confirm('Deseja realmente remover este insumo da tabela de cálculo?')) return;
+            
+            if (tipo === 'produto') {
+                dbProdutos = dbProdutos.filter(p => p.id !== id);
+            } else {
+                dbCores = dbCores.filter(c => c.id !== id);
+            }
+            salvarDadosNuvem();
+        }
+
+        function abrirModalProduto() {
+            const nome = prompt("Nome do Novo Artigo de Malha:");
+            if (!nome) return;
+            const fio = parseFloat(prompt("Custo do Fio por Kg (R$):")) || 0;
+            const tecelagem = parseFloat(prompt("Custo do Serviço de Tecelagem por Kg (R$):")) || 0;
+            const frete = parseFloat(prompt("Custo Logístico/Frete por Kg (R$):")) || 0;
+            const lucro = parseFloat(prompt("Margem de Lucro por Kg (R$):")) || 0;
+
+            dbProdutos.push({ id: 'p_' + Date.now(), nome, fio, tecelagem, frete, lucro });
+            salvarDadosNuvem();
+        }
+
+        function abrirModalCor() {
+            const nome = prompt("Nome do Acabamento de Cor:");
+            if (!nome) return;
+            const tinturaria = parseFloat(prompt("Preço do processo de Tinturaria por Kg (R$):")) || 0;
+
+            dbCores.push({ id: 'c_' + Date.now(), nome, tinturaria });
+            salvarDadosNuvem();
+        }
+    </script>
+</body>
+</html>
